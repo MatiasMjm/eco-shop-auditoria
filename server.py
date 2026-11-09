@@ -14,9 +14,9 @@ Despues, abre http://127.0.0.1:5000 en el navegador.
 """
 
 from datetime import datetime
-
+import math
 import sqlite3
-from flask import Flask, jsonify, request, send_from_directory,math
+from flask import Flask, jsonify, request, send_from_directory
 
 app = Flask(__name__, static_folder=".")
 
