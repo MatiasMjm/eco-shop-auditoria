@@ -14,12 +14,19 @@ Despues, abre http://127.0.0.1:5000 en el navegador.
 """
 
 from datetime import datetime
-
+import math
 import sqlite3
 from flask import Flask, jsonify, request, send_from_directory
 
 app = Flask(__name__, static_folder=".")
 
+# Cupones validos y su descuento (0.20 = 20 %).
+COUPONS = {"ECO20": 0.20}
+
+
+def discount_error(message):
+    """Respuesta de error uniforme para /api/discount (HTTP 400)."""
+    return jsonify({"status": "error", "error": message}), 400
 
 def get_db_connection():
     conn = sqlite3.connect("database.sqlite")
@@ -35,19 +42,44 @@ def home():
 
 @app.route("/api/discount", methods=["POST"])
 def apply_discount():
-    data = request.json
-    price = data.get("price", 0)
-    coupon = data.get("coupon", "")
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return discount_error("El cuerpo debe ser un JSON valido")
 
-    if coupon == "ECO20":
-        final_price = price + (price * 0.20)
+    # --- Validacion del precio ---
+    if "price" not in data:
+        return discount_error("El precio es obligatorio")
+    price = data["price"]
+    if price is None:
+        return discount_error("El precio no puede ser null")
+    # bool es subclase de int en Python: se rechaza de forma explicita.
+    if isinstance(price, bool) or not isinstance(price, (int, float)):
+        return discount_error("El precio debe ser un numero")
+    if not math.isfinite(price):
+        return discount_error("El precio debe ser un numero finito")
+    if price < 0:
+        return discount_error("El precio no puede ser negativo")
+    if price == 0:
+        return discount_error("El precio debe ser mayor que cero")
+
+    # --- Validacion del cupon ---
+    # Sin cupon (ausente, null o cadena vacia): precio sin descuento.
+    coupon = data.get("coupon")
+    if coupon is None or coupon == "":
+        rate = 0.0
+    elif not isinstance(coupon, str):
+        return discount_error("El cupon debe ser una cadena de texto")
+    elif coupon in COUPONS:
+        rate = COUPONS[coupon]
     else:
-        final_price = price
+        return discount_error("Cupon no valido")
+
+    final_price = round(price - (price * rate), 2)
 
     return jsonify({
         "status": "success",
         "original_price": price,
-        "discount_applied": "20%" if coupon == "ECO20" else "0%",
+        "discount_applied": f"{int(rate * 100)}%",
         "final_price": final_price,
     })
 
