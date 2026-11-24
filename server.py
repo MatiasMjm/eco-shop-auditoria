@@ -15,6 +15,7 @@ Despues, abre http://127.0.0.1:5000 en el navegador.
 
 from datetime import datetime
 import math
+import re 
 import sqlite3
 from flask import Flask, jsonify, request, send_from_directory
 
@@ -23,6 +24,8 @@ app = Flask(__name__, static_folder=".")
 # Cupones validos y su descuento (0.20 = 20 %).
 COUPONS = {"ECO20": 0.20}
 
+# Formato minimo de email: algo@dominio.ext, sin espacios.
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 def discount_error(message):
     """Respuesta de error uniforme para /api/discount (HTTP 400)."""
@@ -84,27 +87,78 @@ def apply_discount():
     })
 
 
+def checkout_error(field, message, code=400):
+    """Respuesta de error uniforme para /api/checkout: indica el campo que falla."""
+    return jsonify({"status": "error", "field": field, "error": message}), code
+
+
+def is_integer(value):
+    """True si value es un entero JSON (bool es subclase de int: se excluye)."""
+    return isinstance(value, int) and not isinstance(value, bool)
+
 @app.route("/api/checkout", methods=["POST"])
 def checkout():
-    data = request.json
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return checkout_error("body", "El cuerpo debe ser un JSON valido")
+
+    # --- Validacion de entrada (antes de tocar la base de datos) ---
     email = data.get("email")
+    if not isinstance(email, str) or not EMAIL_RE.match(email):
+        return checkout_error("email", "El email es obligatorio y debe tener un formato valido")
+
     product_id = data.get("product_id")
+    if not is_integer(product_id):
+        return checkout_error("product_id", "El product_id es obligatorio y debe ser un entero")
+
     quantity = data.get("quantity")
+    if "quantity" not in data or quantity is None:
+        return checkout_error("quantity", "La cantidad es obligatoria")
+    if not is_integer(quantity):
+        return checkout_error("quantity", "La cantidad debe ser un numero entero")
+    if quantity <= 0:
+        return checkout_error("quantity", "La cantidad debe ser mayor que cero")
 
     conn = get_db_connection()
-    product = conn.execute(
-        "SELECT * FROM products WHERE id = ?", (product_id,)).fetchone()
+    try:
+        product = conn.execute(
+            "SELECT * FROM products WHERE id = ?", (product_id,)).fetchone()
+        if not product:
+            return checkout_error("product_id", "Producto no encontrado", 404)
 
-    if not product:
+        if product["stock"] < quantity:
+            return checkout_error(
+                "quantity",
+                "Existencias insuficientes: quedan %d unidades" % max(product["stock"], 0))
+
+        total = round(product["price"] * quantity, 2)
+
+        # Usuario asociado al email; si no existe, el pedido queda sin user_id.
+        user = conn.execute(
+            "SELECT id FROM users WHERE email = ? ORDER BY id LIMIT 1", (email,)).fetchone()
+        user_id = user["id"] if user else None
+
+        # Descontar stock y crear el pedido en una unica transaccion.
+        # El UPDATE condicional evita dejar el stock en negativo si dos
+        # compras simultaneas piden la ultima unidad.
+        with conn:
+            updated = conn.execute(
+                "UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?",
+                (quantity, product_id, quantity))
+            if updated.rowcount != 1:
+                return checkout_error("quantity", "Existencias insuficientes")
+            cursor = conn.execute(
+                "INSERT INTO orders (user_id, product_id, quantity, total, status) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (user_id, product_id, quantity, total, "PENDING"))
+            order_id = cursor.lastrowid
+    finally:
         conn.close()
-        return jsonify({"error": "Producto no encontrado"}), 404
-
-    total = product["price"] * quantity
-    conn.close()
 
     return jsonify({
         "message": "Pedido realizado con exito",
         "order_details": {
+            "order_id": order_id,
             "email": email,
             "product": product["name"],
             "quantity": quantity,
