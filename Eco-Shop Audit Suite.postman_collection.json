@@ -1,0 +1,684 @@
+{
+  "info": {
+    "_postman_id": "d2d2ce42-f316-4327-bc68-2a69a29229fc",
+    "name": "Eco-Shop Audit Suite",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "58208613",
+    "_collection_link": "https://go.postman.co/collection/58208613-d2d2ce42-f316-4327-bc68-2a69a29229fc?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Aplicar descuento",
+      "item": [
+        {
+          "name": "01 Aplicar Descuento ECO20",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Status code 200 \r\npm.test('status 200', () => pm.response.to.have.status(200));\r\n// ECO20 = 20% de descuento: 100 -> 80\r\npm.test('discount applied', () => pm.expect(pm.response.json().discount_applied).to.eql('20%'));\r\n// Final price after discount: 100 - 20 = 80\r\npm.test('final price', () => pm.expect(pm.response.json().final_price).to.eql(80));\r\n\r\n"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"price\": 100,\n    \"coupon\": \"ECO20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/discount",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "discount"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 Sin cupón sobre 100",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Sin cupón el precio no cambia\r\n//Status code 200\r\npm.test('status 200', () => pm.response.to.have.status(200));\r\npm.test('precio no cambia sin cupón', () => pm.expect(pm.response.json().final_price).to.equal(100));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"price\": 100,\r\n    \"coupon\": \"\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/discount",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "discount"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 Precio negativo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Status code 400 \r\npm.test('status 400', () => pm.response.to.have.status(400));\r\n//Devuelve un mensaje de error\r\npm.test('error message', () => pm.expect(pm.response.text()).to.include('El precio no puede ser negativo'));\r\n\r\n\r\n"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"price\": -100,\n    \"coupon\": \"ECO20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/discount",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "discount"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04 Precio cero",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Status code 400 \r\npm.test('status 400', () => pm.response.to.have.status(400));\r\n//Devuelve un mensaje de error\r\npm.test('error message', () => pm.expect(pm.response.text()).to.include('El precio debe ser mayor que cero'));\r\n\r\n"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"price\": 0,\n    \"coupon\": \"ECO20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/discount",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "discount"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "05 Precio texto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Status code 400 \r\npm.test('status 400', () => pm.response.to.have.status(400));\r\n//Devuelve un mensaje de error\r\npm.test('error message', () => pm.expect(pm.response.text()).to.include('El precio debe ser un numero'));\r\n\r\n"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"price\": \"abc\",\n    \"coupon\": \"ECO20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/discount",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "discount"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "06 Precio como string",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Status code 400 \r\npm.test('status 400', () => pm.response.to.have.status(400));\r\n//Devuelve un mensaje de error\r\npm.test('error message', () => pm.expect(pm.response.text()).to.include('El precio debe ser un numero'));\r\n\r\n"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"price\": \"100\",\n    \"coupon\": \"ECO20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/discount",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "discount"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "07 Precio Null",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Status code 400 \r\n// null no es un precio\r\npm.test('status 400', () => pm.response.to.have.status(400));\r\n//Devuelve un mensaje de error\r\npm.test('error message', () => pm.expect(pm.response.text()).to.include('El precio no puede ser null'));\r\n\r\n"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"price\": null,\n    \"coupon\": \"ECO20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/discount",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "discount"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "08 Precio ausente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Status code 400 \r\n// null no es un precio\r\npm.test('status 400', () => pm.response.to.have.status(400));\r\n//Devuelve un mensaje de error\r\npm.test('error message', () => pm.expect(pm.response.text()).to.include('El precio es obligatorio'));\r\n\r\n"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"price\": ,\n    \"coupon\": \"ECO20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/discount",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "discount"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "09 Precio Infinito",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Status code 400 \r\n// Infinity no es un precio valido\r\npm.test('status 400', () => pm.response.to.have.status(400));\r\n//Devuelve un mensaje de error\r\npm.test('error message', () => pm.expect(pm.response.text()).to.include('El precio debe ser un numero finito'));\r\n\r\n"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"price\": 1e999,\n    \"coupon\": \"ECO20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/discount",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "discount"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "10 Cupón inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "\r\n// Status code 400\r\n// Un cupon desconocido no se debe ignorar en silencio ni dar descuento\r\npm.test('status 400', () => pm.response.to.have.status(400));\r\n//Devuelve un mensaje de error\r\npm.test('error message', () => pm.expect(pm.response.text()).to.include('Cupon no valido'));\r\n\r\n"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"price\": 100,\n    \"coupon\": \"FAKE50\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/discount",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "discount"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "11 Cupón no string",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "\r\n// Status code 400\r\npm.test('status 400', () => pm.response.to.have.status(400));\r\n// El cupón debe ser texto\r\npm.test('coupon debe ser texto', () => pm.expect(pm.response.json().coupon).to.be.a('string'));\r\n\r\n// El cupón debe tener al menos 5 caracteres\r\npm.test('coupon length', () => pm.expect(pm.response.json().coupon).to.have.lengthOf.at.least(5));\r\n\r\n//Devuelve un mensaje de error\r\npm.test('error message', () => pm.expect(pm.response.text()).to.include('El cupon debe ser una cadena de texto'));\r\n\r\n"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"price\": 100,\n    \"coupon\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/discount",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "discount"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "12 Cupón no JSON",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "\r\n// Status code 400\r\npm.test('status 400', () => pm.response.to.have.status(400));\r\n// El cupón debe ser texto\r\npm.test('coupon debe ser texto', () => pm.expect(pm.response.json().coupon).to.be.a('string'));\r\n\r\n\r\n//Devuelve un mensaje de error\r\npm.test('error message', () => pm.expect(pm.response.text()).to.include('El cuerpo debe ser un JSON valido'));\r\n\r\n"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "\"esto no es json\"",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/discount",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "discount"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Checkout pedido",
+      "item": [
+        {
+          "name": "01 Compra normal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));\r\n"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"usuario@correo.com\",\n    \"product_id\": 101,\n    \"quantity\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/checkout",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "checkout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 Cantidad negativa",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"usuario@correo.com\",\n    \"product_id\": 101,\n    \"quantity\": -5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/checkout",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "checkout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 Cantidad cero",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"usuario@correo.com\",\n    \"product_id\": 101,\n    \"quantity\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/checkout",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "checkout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04 Sin cantidad",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"usuario@correo.com\",\n    \"product_id\": 103,\n    \"quantity\": \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/checkout",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "checkout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "05 Cantidad no es un número",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"usuario@correo.com\",\n    \"product_id\": 103,\n    \"quantity\": \"abcd\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/checkout",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "checkout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "06 Correo con formato inválido",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"usuario@correo\",\n    \"product_id\": 103,\n    \"quantity\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/checkout",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "checkout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "07 Producto que no existe",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"usuario@correo.com\",\n    \"product_id\": 110,\n    \"quantity\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/checkout",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "checkout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "08 Producto sin existencia",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"usuario@correo.com\",\n    \"product_id\": 104,\n    \"quantity\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/checkout",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "checkout"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
