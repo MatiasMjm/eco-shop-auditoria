@@ -1,0 +1,21 @@
+---
+alwaysApply: false
+---
+# Reglas de calidad – Eco-Shop
+
+## Validación de endpoints (contrato HTTP)
+
+Al crear o modificar cualquier endpoint en `server.py`:
+
+- Devolver siempre el código de estado correcto: `200` (OK), `201` (creado), `400` (datos inválidos), `404` (recurso no existe), `500` (error interno controlado).
+- Validar el cuerpo de la petición antes de usarlo: campos obligatorios presentes, tipos correctos (`price` numérico, `quantity` entero) y rangos válidos (precio >= 0, cantidad > 0).
+- Validar parámetros de ruta y query (ids enteros positivos); si no son válidos, responder `400`, no `500`.
+
+
+## Integridad del esquema y de los datos
+
+En `setup_db.py` y en cualquier cambio de esquema:
+
+- Cada tabla debe tener clave primaria y las columnas obligatorias deben declararse `NOT NULL`.
+- Definir restricciones en la base de datos, no solo en el código: `CHECK (price >= 0)`, `CHECK (stock >= 0)`, `UNIQUE` en campos únicos y `FOREIGN KEY` en relaciones (activar `PRAGMA foreign_keys = ON`).
+- Los datos no deben incluir valores inválidos (precios negativos, stock nulo, campos vacíos).
